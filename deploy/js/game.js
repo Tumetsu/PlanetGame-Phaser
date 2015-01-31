@@ -89656,16 +89656,17 @@ var state = {
       this.player.body.collideWorldBounds = true;
       this.reset();
     */  
+        game.stage.backgroundColor = '#124184';
         game.physics.startSystem(Phaser.Physics.ARCADE);
         game.physics.arcade.gravity.y = GRAVITY;
         
-        var planet1 = new Planet(this, 500, 500);
+        var planet1 = new Planet(this, 300, 500, 600000);
         this.add.existing(planet1);
-        var planet2 = new Planet(this, 500, 200);
+        var planet2 = new Planet(this, 600, 200, 400000);
         this.add.existing(planet2);
 
-        var player = new SpaceShip(this, 200, 300);
-        this.add.existing(player);
+        this.player = new SpaceShip(this, 200, 300);
+        this.add.existing(this.player);
 
 
         //käy läpi pelimaailman oliot ja tulosta ne konsoliin.
@@ -89673,6 +89674,11 @@ var state = {
 
 
 
+    },
+
+    render: function() {
+        game.debug.geom(this.player.gravline);
+        game.debug.lineInfo(this.player.gravline, 32, 32);
     },
     update: function() {
         // State Update Logic goes here.
@@ -89713,7 +89719,7 @@ var game = new Phaser.Game(
 //definition for planet
 
 
-function Planet(game, x, y) 
+function Planet(game, x, y, mass) 
 {
 	Phaser.Sprite.call(this, game, x, y);
 	this.anchor.setTo(0.5, 0.5);
@@ -89724,7 +89730,7 @@ function Planet(game, x, y)
     this.graphics.drawCircle(0, 0,100);
 	
 	//physics
-	this.mass = 60000;
+	this.mass = mass;
 	this.name = "planet";
 
 };
@@ -89734,11 +89740,9 @@ Planet.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite clas
 Planet.prototype.constructor = Planet;
 
 Planet.prototype.attraction = function(distance, otherMass) {
-	var g = (this.mass * otherMass) / Math.pow(distance/10, 1);
+	var g = (this.mass * otherMass) / Math.pow(distance/10, 2);
 	if (g > 800)
 		g = 800;
-	console.log(g);
-
 	return g;
 };
 
@@ -89761,12 +89765,7 @@ function SpaceShip(game, x, y) {
 	this.body.maxVelocity.x = 500;
 	this.body.maxVelocity.y = 500;
 	this.body.mass = 1;
-	this.gravitySumVector = { x: 0, y:0};
-
-	//temporary gravity center
-	this.closestMassCenter = null;
-	this.distToClosest = 0;
-	this.gravPower = 900;
+	this.gravitySumVector = new Phaser.Point();
 
 	//input
 	this.upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
@@ -89774,8 +89773,8 @@ function SpaceShip(game, x, y) {
 	this.leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
 	this.rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
 
-
-
+	this.gravline = new Phaser.Line(x,y,x,y);
+	
 
 };
 
@@ -89794,38 +89793,28 @@ SpaceShip.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite c
 SpaceShip.prototype.constructor = SpaceShip;
 
 
-SpaceShip.prototype.findClosestAttractor = function() 
+SpaceShip.prototype.calculateGravity = function() 
 {
-	//console.log("check");
-	var closest = null;
+	this.gravitySumVector.x = 0;
+	this.gravitySumVector.y = 0;
+
 	this.game.world.forEach(function(obj) {
 			
 			if (obj.name === "planet")
 			{
-				//find closest planet
-				if (closest === null)
-				{
-					closest = obj;
-					this.distToClosest = Phaser.Point.distance(this, obj);	
-				}
-				else 
-				{
-					var dist = Phaser.Point.distance(this, obj);
-					if (dist < this.distToClosest)
-					{
-						closest = obj;
-						this.distToClosest = dist;
-					}
-				}
-				
+				var newVec = new Phaser.Point(obj.x - this.body.x, obj.y - this.body.y);
+				//true force towards the planet
+				newVec = newVec.normalize().multiply(obj.attraction(Phaser.Point.distance(this, obj), this.body.mass), obj.attraction(Phaser.Point.distance(this, obj), this.body.mass));
+				this.gravitySumVector = Phaser.Point.add(this.gravitySumVector, newVec);
 			}
 		}, this,true);
 
-	//set new mass center-point
-	this.closestMassCenter = closest;
+	this.body.gravity = this.gravitySumVector;
+
+	this.gravline.setTo(this.x, this.y, this.x + this.gravitySumVector.x, this.y + this.gravitySumVector.y);
+	
 		
 }
-
 
 
 /**
@@ -89833,13 +89822,7 @@ SpaceShip.prototype.findClosestAttractor = function()
  */
 SpaceShip.prototype.update = function() {
 
-	this.findClosestAttractor();
-
-	// Calculate gravity as the normalised vector from the ship to the planet
-    this.body.gravity = new Phaser.Point(this.closestMassCenter.x - this.body.x, this.closestMassCenter.y - this.body.y);
-    // Normalize and multiply by actual strength of gravity desired
-    //console.log(this.closestMassCenter.attraction);
-    this.body.gravity = this.body.gravity.normalize().multiply(this.closestMassCenter.attraction(this.distToClosest, this.body.mass), this.closestMassCenter.attraction(this.distToClosest, this.body.mass));
+	this.calculateGravity();
 
     if (this.upKey.isDown)
     {
@@ -89859,6 +89842,8 @@ SpaceShip.prototype.update = function() {
     {
     	this.body.velocity.x -= this.engineForce;
     }
+
+   this.rotation = this.body.angle;
 
     
 };

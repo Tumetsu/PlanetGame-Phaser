@@ -1,7 +1,7 @@
 //definition for planet
 
 
-function Planet(game, x, y) 
+function Planet(game, x, y, mass) 
 {
 	Phaser.Sprite.call(this, game, x, y);
 	this.anchor.setTo(0.5, 0.5);
@@ -12,7 +12,7 @@ function Planet(game, x, y)
     this.graphics.drawCircle(0, 0,100);
 	
 	//physics
-	this.mass = 60000;
+	this.mass = mass;
 	this.name = "planet";
 
 };
@@ -22,11 +22,9 @@ Planet.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite clas
 Planet.prototype.constructor = Planet;
 
 Planet.prototype.attraction = function(distance, otherMass) {
-	var g = (this.mass * otherMass) / Math.pow(distance/10, 1);
+	var g = (this.mass * otherMass) / Math.pow(distance/10, 2);
 	if (g > 800)
 		g = 800;
-	console.log(g);
-
 	return g;
 };
 

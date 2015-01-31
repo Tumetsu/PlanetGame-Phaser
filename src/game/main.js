@@ -37,16 +37,17 @@ var state = {
       this.player.body.collideWorldBounds = true;
       this.reset();
     */  
+        game.stage.backgroundColor = '#124184';
         game.physics.startSystem(Phaser.Physics.ARCADE);
         game.physics.arcade.gravity.y = GRAVITY;
         
-        var planet1 = new Planet(this, 500, 500);
+        var planet1 = new Planet(this, 300, 500, 600000);
         this.add.existing(planet1);
-        var planet2 = new Planet(this, 500, 200);
+        var planet2 = new Planet(this, 600, 200, 400000);
         this.add.existing(planet2);
 
-        var player = new SpaceShip(this, 200, 300);
-        this.add.existing(player);
+        this.player = new SpaceShip(this, 200, 300);
+        this.add.existing(this.player);
 
 
         //käy läpi pelimaailman oliot ja tulosta ne konsoliin.
@@ -55,6 +56,8 @@ var state = {
 
 
     },
+
+    
     update: function() {
         // State Update Logic goes here.
         /*
