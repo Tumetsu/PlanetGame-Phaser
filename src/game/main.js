@@ -9,7 +9,7 @@
 
 
 var SPEED = 200;
-var GRAVITY = 900;
+var GRAVITY = 0;
 
 var state = {
     init: function() {
@@ -39,10 +39,19 @@ var state = {
     */  
         game.physics.startSystem(Phaser.Physics.ARCADE);
         game.physics.arcade.gravity.y = GRAVITY;
-        var player = new SpaceShip(game, 200, 300);
-        game.add.existing(player);
+        
+        var planet1 = new Planet(this, 500, 500);
+        this.add.existing(planet1);
+        var planet2 = new Planet(this, 500, 200);
+        this.add.existing(planet2);
 
-     
+        var player = new SpaceShip(this, 200, 300);
+        this.add.existing(player);
+
+
+        //käy läpi pelimaailman oliot ja tulosta ne konsoliin.
+        game.world.forEach(function(child) { console.log(child)}, this, true);
+
 
 
     },
@@ -74,8 +83,8 @@ var state = {
 
 
 var game = new Phaser.Game(
-    800,
-    480,
+    1000,
+    1000,
     Phaser.AUTO,
     'game',
     state

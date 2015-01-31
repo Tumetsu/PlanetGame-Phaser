@@ -1,0 +1,7 @@
+IDEOITA
+
+- Peli on välillä sidescroller jossa vihut tulevat oikealta kohti. Ajoittain se kuitenkin vaihtuu
+yhtäkkiä upscrolleriksi jolloin planeetta vetää alusta maata kohti. Tällöin on väisteltävä välillä vuoria yms. joihin 
+törmääminen maatasossa aiheuttaa tuhoutumisen
+
+- Kentän alareunassa on jokin objekti, jonka painovoima vetää puoleensa alusta.

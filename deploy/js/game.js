@@ -89628,7 +89628,7 @@ var b=new kb(a),c=new Proxy(b,Eb);return b._proxy=c,c}function mb(a,b,c){return"
 
 
 var SPEED = 200;
-var GRAVITY = 900;
+var GRAVITY = 0;
 
 var state = {
     init: function() {
@@ -89658,10 +89658,19 @@ var state = {
     */  
         game.physics.startSystem(Phaser.Physics.ARCADE);
         game.physics.arcade.gravity.y = GRAVITY;
-        var player = new SpaceShip(game, 200, 300);
-        game.add.existing(player);
+        
+        var planet1 = new Planet(this, 500, 500);
+        this.add.existing(planet1);
+        var planet2 = new Planet(this, 500, 200);
+        this.add.existing(planet2);
 
-     
+        var player = new SpaceShip(this, 200, 300);
+        this.add.existing(player);
+
+
+        //käy läpi pelimaailman oliot ja tulosta ne konsoliin.
+        game.world.forEach(function(child) { console.log(child)}, this, true);
+
 
 
     },
@@ -89693,12 +89702,46 @@ var state = {
 
 
 var game = new Phaser.Game(
-    800,
-    480,
+    1000,
+    1000,
     Phaser.AUTO,
     'game',
     state
 );
+
+
+//definition for planet
+
+
+function Planet(game, x, y) 
+{
+	Phaser.Sprite.call(this, game, x, y);
+	this.anchor.setTo(0.5, 0.5);
+
+	this.graphics = game.add.graphics(x, y);
+	this.graphics.lineStyle(0);
+    this.graphics.beginFill(0xFFFF0B, 0.5);
+    this.graphics.drawCircle(0, 0,100);
+	
+	//physics
+	this.mass = 60000;
+	this.name = "planet";
+
+};
+
+//inherit
+Planet.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite class.
+Planet.prototype.constructor = Planet;
+
+Planet.prototype.attraction = function(distance, otherMass) {
+	var g = (this.mass * otherMass) / Math.pow(distance/10, 1);
+	if (g > 800)
+		g = 800;
+	console.log(g);
+
+	return g;
+};
+
 
 
 //definition for player's ship
@@ -89711,9 +89754,19 @@ function SpaceShip(game, x, y) {
 	//physics
 	game.physics.enable([this], Phaser.Physics.ARCADE);
 	this.body.collideWorldBounds = true;
-	this.engineForce = 250;
+	this.engineForce = 5;
 	this.body.allowGravity = true;
-	this.body.drag.y = 50;
+	this.body.drag.x = 0;
+	this.body.drag.y = 0;
+	this.body.maxVelocity.x = 500;
+	this.body.maxVelocity.y = 500;
+	this.body.mass = 1;
+	this.gravitySumVector = { x: 0, y:0};
+
+	//temporary gravity center
+	this.closestMassCenter = null;
+	this.distToClosest = 0;
+	this.gravPower = 900;
 
 	//input
 	this.upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
@@ -89740,21 +89793,73 @@ SpaceShip.prototype = {
 SpaceShip.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite class.
 SpaceShip.prototype.constructor = SpaceShip;
 
-/*
-SpaceShip.prototype.sayHi = function() {
-	alert("SPAACEEE");
+
+SpaceShip.prototype.findClosestAttractor = function() 
+{
+	//console.log("check");
+	var closest = null;
+	this.game.world.forEach(function(obj) {
+			
+			if (obj.name === "planet")
+			{
+				//find closest planet
+				if (closest === null)
+				{
+					closest = obj;
+					this.distToClosest = Phaser.Point.distance(this, obj);	
+				}
+				else 
+				{
+					var dist = Phaser.Point.distance(this, obj);
+					if (dist < this.distToClosest)
+					{
+						closest = obj;
+						this.distToClosest = dist;
+					}
+				}
+				
+			}
+		}, this,true);
+
+	//set new mass center-point
+	this.closestMassCenter = closest;
+		
 }
-*/
+
+
 
 /**
  * Automatically called by World.update
  */
 SpaceShip.prototype.update = function() {
 
+	this.findClosestAttractor();
+
+	// Calculate gravity as the normalised vector from the ship to the planet
+    this.body.gravity = new Phaser.Point(this.closestMassCenter.x - this.body.x, this.closestMassCenter.y - this.body.y);
+    // Normalize and multiply by actual strength of gravity desired
+    //console.log(this.closestMassCenter.attraction);
+    this.body.gravity = this.body.gravity.normalize().multiply(this.closestMassCenter.attraction(this.distToClosest, this.body.mass), this.closestMassCenter.attraction(this.distToClosest, this.body.mass));
+
     if (this.upKey.isDown)
     {
-    	this.body.velocity.y = -this.engineForce;
+    	this.body.velocity.y *= this.engineForce;
     }
 
+	if (this.downKey.isDown)
+    {
+    	this.body.velocity.y += this.engineForce;
+    }
+    if (this.rightKey.isDown)
+    {
+    	this.body.velocity.x += this.engineForce;
+    }
+
+    if (this.leftKey.isDown)
+    {
+    	this.body.velocity.x -= this.engineForce;
+    }
+
+    
 };
 
