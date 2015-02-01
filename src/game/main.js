@@ -41,14 +41,15 @@ var state = {
         game.physics.startSystem(Phaser.Physics.ARCADE);
         game.physics.arcade.gravity.y = GRAVITY;
         
-        var planet1 = new Planet(this, 300, 500, 600000);
+        
+        var planet1 = new Planet(this, 300, 500, 4000000);
         this.add.existing(planet1);
-        var planet2 = new Planet(this, 600, 200, 400000);
-        this.add.existing(planet2);
-
+        //var planet2 = new Planet(this, 600, 200, 400000);
+        //this.add.existing(planet2);
+        
         this.player = new SpaceShip(this, 200, 300);
         this.add.existing(this.player);
-
+        
 
         //käy läpi pelimaailman oliot ja tulosta ne konsoliin.
         game.world.forEach(function(child) { console.log(child)}, this, true);
@@ -56,8 +57,12 @@ var state = {
 
 
     },
-
-    
+    /*
+    render: function() {
+        game.debug.geom(this.player.engineLine);
+        game.debug.lineInfo(this.player.engineLine, 32, 32);
+    },
+    */
     update: function() {
         // State Update Logic goes here.
         /*

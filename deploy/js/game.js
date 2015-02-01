@@ -89660,14 +89660,15 @@ var state = {
         game.physics.startSystem(Phaser.Physics.ARCADE);
         game.physics.arcade.gravity.y = GRAVITY;
         
-        var planet1 = new Planet(this, 300, 500, 600000);
+        
+        var planet1 = new Planet(this, 300, 500, 4000000);
         this.add.existing(planet1);
-        var planet2 = new Planet(this, 600, 200, 400000);
-        this.add.existing(planet2);
-
+        //var planet2 = new Planet(this, 600, 200, 400000);
+        //this.add.existing(planet2);
+        
         this.player = new SpaceShip(this, 200, 300);
         this.add.existing(this.player);
-
+        
 
         //käy läpi pelimaailman oliot ja tulosta ne konsoliin.
         game.world.forEach(function(child) { console.log(child)}, this, true);
@@ -89675,11 +89676,12 @@ var state = {
 
 
     },
-
+    /*
     render: function() {
-        game.debug.geom(this.player.gravline);
-        game.debug.lineInfo(this.player.gravline, 32, 32);
+        game.debug.geom(this.player.engineLine);
+        game.debug.lineInfo(this.player.engineLine, 32, 32);
     },
+    */
     update: function() {
         // State Update Logic goes here.
         /*
@@ -89740,7 +89742,7 @@ Planet.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite clas
 Planet.prototype.constructor = Planet;
 
 Planet.prototype.attraction = function(distance, otherMass) {
-	var g = (this.mass * otherMass) / Math.pow(distance/10, 2);
+	var g = (this.mass * otherMass) / Math.pow(distance, 2);
 	if (g > 800)
 		g = 800;
 	return g;
@@ -89749,8 +89751,6 @@ Planet.prototype.attraction = function(distance, otherMass) {
 
 
 //definition for player's ship
-
-
 function SpaceShip(game, x, y) {
 	Phaser.Sprite.call(this, game, x, y, 'playership');
 	this.anchor.setTo(0.5, 0.5);
@@ -89758,34 +89758,25 @@ function SpaceShip(game, x, y) {
 	//physics
 	game.physics.enable([this], Phaser.Physics.ARCADE);
 	this.body.collideWorldBounds = true;
-	this.engineForce = 5;
+	this.engineForce = 1.1;
 	this.body.allowGravity = true;
 	this.body.drag.x = 0;
 	this.body.drag.y = 0;
-	this.body.maxVelocity.x = 500;
-	this.body.maxVelocity.y = 500;
+	this.body.maxVelocity.x = 400;
+	this.body.maxVelocity.y = 400;
 	this.body.mass = 1;
+	this.turnSpeed = 3;
 	this.gravitySumVector = new Phaser.Point();
 
 	//input
 	this.upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
 	this.downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
 	this.leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
-	this.rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+	this.rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);	
 
-	this.gravline = new Phaser.Line(x,y,x,y);
-	
-
-};
-
-/*
-SpaceShip.prototype = {
-	constructor: SpaceShip,
-	sayName: function() {
-		alert("SPAAAACEEEE!");
+	this.engineLine = new Phaser.Line(x,y,x,y);
 
 };
-*/
 
 
 //inherit
@@ -89804,16 +89795,13 @@ SpaceShip.prototype.calculateGravity = function()
 			{
 				var newVec = new Phaser.Point(obj.x - this.body.x, obj.y - this.body.y);
 				//true force towards the planet
-				newVec = newVec.normalize().multiply(obj.attraction(Phaser.Point.distance(this, obj), this.body.mass), obj.attraction(Phaser.Point.distance(this, obj), this.body.mass));
+				newVec = newVec.normalize().multiply(obj.attraction(Phaser.Point.distance(this, obj), this.body.mass), 
+						obj.attraction(Phaser.Point.distance(this, obj), this.body.mass));
 				this.gravitySumVector = Phaser.Point.add(this.gravitySumVector, newVec);
 			}
 		}, this,true);
 
-	this.body.gravity = this.gravitySumVector;
-
-	this.gravline.setTo(this.x, this.y, this.x + this.gravitySumVector.x, this.y + this.gravitySumVector.y);
-	
-		
+	this.body.gravity = this.gravitySumVector;		
 }
 
 
@@ -89824,27 +89812,34 @@ SpaceShip.prototype.update = function() {
 
 	this.calculateGravity();
 
+	//thrust
     if (this.upKey.isDown)
     {
-    	this.body.velocity.y *= this.engineForce;
+    	var v = new Phaser.Point(20, 0);
+    	v = Phaser.Point.normalRightHand(v);
+    	console.log(v);
+    	v = Phaser.Point.rotate(v, 0, 0, this.angle+270, true);
+    	console.log(v);
+    	this.body.velocity = Phaser.Point.add(v.normalize().multiply(this.engineForce,this.engineForce), this.body.velocity);
+    	this.engineLine.setTo(this.x, this.y, this.x + v.x, this.y + v.y);
+    	console.log(this.body.velocity);
     }
 
 	if (this.downKey.isDown)
     {
-    	this.body.velocity.y += this.engineForce;
+    	//this.body.velocity.y += this.engineForce;
     }
+
     if (this.rightKey.isDown)
     {
-    	this.body.velocity.x += this.engineForce;
+    	this.angle += this.turnSpeed;
     }
 
     if (this.leftKey.isDown)
     {
-    	this.body.velocity.x -= this.engineForce;
+    	this.angle -= this.turnSpeed;
     }
 
-   this.rotation = this.body.angle;
-
-    
+   //this.rotation = this.body.angle; 
 };
 

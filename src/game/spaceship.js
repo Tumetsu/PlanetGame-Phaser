@@ -6,13 +6,14 @@ function SpaceShip(game, x, y) {
 	//physics
 	game.physics.enable([this], Phaser.Physics.ARCADE);
 	this.body.collideWorldBounds = true;
-	this.engineForce = 5;
+	this.engineForce = 1.1;
 	this.body.allowGravity = true;
 	this.body.drag.x = 0;
 	this.body.drag.y = 0;
-	this.body.maxVelocity.x = 500;
-	this.body.maxVelocity.y = 500;
+	this.body.maxVelocity.x = 400;
+	this.body.maxVelocity.y = 400;
 	this.body.mass = 1;
+	this.turnSpeed = 3;
 	this.gravitySumVector = new Phaser.Point();
 
 	//input
@@ -20,6 +21,8 @@ function SpaceShip(game, x, y) {
 	this.downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
 	this.leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
 	this.rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);	
+
+	this.engineLine = new Phaser.Line(x,y,x,y);
 
 };
 
@@ -57,25 +60,34 @@ SpaceShip.prototype.update = function() {
 
 	this.calculateGravity();
 
+	//thrust
     if (this.upKey.isDown)
     {
-    	this.body.velocity.y *= this.engineForce;
+    	var v = new Phaser.Point(20, 0);
+    	v = Phaser.Point.normalRightHand(v);
+    	console.log(v);
+    	v = Phaser.Point.rotate(v, 0, 0, this.angle+270, true);
+    	console.log(v);
+    	this.body.velocity = Phaser.Point.add(v.normalize().multiply(this.engineForce,this.engineForce), this.body.velocity);
+    	this.engineLine.setTo(this.x, this.y, this.x + v.x, this.y + v.y);
+    	console.log(this.body.velocity);
     }
 
 	if (this.downKey.isDown)
     {
-    	this.body.velocity.y += this.engineForce;
+    	//this.body.velocity.y += this.engineForce;
     }
+
     if (this.rightKey.isDown)
     {
-    	this.body.velocity.x += this.engineForce;
+    	this.angle += this.turnSpeed;
     }
 
     if (this.leftKey.isDown)
     {
-    	this.body.velocity.x -= this.engineForce;
+    	this.angle -= this.turnSpeed;
     }
 
-   this.rotation = this.body.angle; 
+   //this.rotation = this.body.angle; 
 };
 

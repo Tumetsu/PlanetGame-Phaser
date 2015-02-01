@@ -22,7 +22,7 @@ Planet.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite clas
 Planet.prototype.constructor = Planet;
 
 Planet.prototype.attraction = function(distance, otherMass) {
-	var g = (this.mass * otherMass) / Math.pow(distance/10, 2);
+	var g = (this.mass * otherMass) / Math.pow(distance, 2);
 	if (g > 800)
 		g = 800;
 	return g;
