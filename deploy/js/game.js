@@ -89630,6 +89630,22 @@ var b=new kb(a),c=new Proxy(b,Eb);return b._proxy=c,c}function mb(a,b,c){return"
 var SPEED = 200;
 var GRAVITY = 0;
 
+        var worldwidth = 2000;
+        var mapSizeMaxCurrent = 800;
+        var mapSizeMax = 2000;
+        var mapSizeX = 800;
+        var mapSizeY = 700;
+        var worldScale = 1;
+        var stageGroup = null;
+        var oldcamera = null;
+        var currentcamerapositionX = 0;
+        var currentcamerapositionY = 0;
+        var followx = 0;
+        var followy = 0;
+        var rescalefactorx = 1;
+        var rescalefactory = 1;
+
+
 var state = {
     init: function() {
 
@@ -89648,7 +89664,7 @@ var state = {
       this.physics.startSystem(Phaser.Physics.ARCADE);
       this.physics.arcade.gravity.y = GRAVITY;
 
-      this.background = this.add.tileSprite(0,0, this.world.width, this.world.height, 'background');
+      
       this.background.autoScroll(-SPEED,0);
 
       this.player = this.add.sprite(0,0,'player');
@@ -89657,12 +89673,14 @@ var state = {
       this.player.body.collideWorldBounds = true;
       this.reset();
     */  
+
         game.stage.backgroundColor = '#124184';
         //game.physics.startSystem(Phaser.Physics.ARCADE);
         game.world.setBounds(0,0, 2000, 2000);
         game.physics.startSystem(Phaser.Physics.P2JS);
         game.physics.arcade.gravity.y = GRAVITY;
-        
+        //stageGroup = new Phaser.Group(game);
+        this.background = this.add.tileSprite(0,0, this.world.width, this.world.height, 'background');
         
         var planet1 = new Planet(this, 300, 500, 100000);
         this.add.existing(planet1);
@@ -89673,10 +89691,7 @@ var state = {
         this.add.existing(this.player);
         
 
-        //käy läpi pelimaailman oliot ja tulosta ne konsoliin.
-        game.world.forEach(function(child) { console.log(child)}, this, true);
-
-
+        
 
     },
     /*
@@ -89693,6 +89708,8 @@ var state = {
             this.player.y = this.world.centerY + (8 * Math.cos(this.time.now/200));
         }
         */
+        //zoom();
+
     },
     reset:function(){
         /*
@@ -89706,15 +89723,54 @@ var state = {
         */
     }
 
-
    
 };
 
+var zoom = function() {
+  
+    // zoom in/out with a/o
+        if ((mapSizeMaxCurrent < mapSizeMax)) 
+        { 
+            console.log("kasva");
+            mapSizeMaxCurrent += 32; 
+        }
+            else if (game.input.keyboard.isDown(Phaser.Keyboard.O) && (mapSizeMaxCurrent > worldwidth )) { mapSizeMaxCurrent -= 32; }
+            console.log("2");
+            mapSizeMaxCurrent = Phaser.Math.clamp(mapSizeMaxCurrent, worldwidth , mapSizeMax); 
+            worldScale = mapSizeMaxCurrent/mapSizeMax;
+
+            console.log(stageGroup);
+            stageGroup.scale.set(worldScale);  // scales my stageGroup (contains all objects that shouldbe scaled)
+
+            if(game.input.activePointer.isDown && !game.input.pointer2.isDown){   //move around the world
+                if (oldcamera) { 
+                    game.camera.x += oldcamera.x - game.input.activePointer.position.x; 
+                    game.camera.y += oldcamera.y - game.input.activePointer.position.y; 
+                }
+                oldcamera = game.input.activePointer.position.clone();
+                // store current camera position (relative to the actual scale size of the world)
+                rescalefactorx = mapSizeX / (mapSizeX * worldScale); // multiply by rescalefactor to get original world value
+                rescalefactory = mapSizeY / (mapSizeY * worldScale);
+                currentcamerapositionX = game.camera.view.centerX*rescalefactorx;
+                currentcamerapositionY = game.camera.view.centerY*rescalefactory;
+            }
+            else { //center camera on the point that was in the center of the view atm the zooming started
+                oldcamera = null;
+                if (!currentcamerapositionX){ // if not set yet (never zoomed)
+                    currentcamerapositionX = game.camera.view.centerX;
+                    currentcamerapositionY = game.camera.view.centerY;
+                }
+                followx = currentcamerapositionX*worldScale;
+                followy = currentcamerapositionY*worldScale;
+
+                game.camera.focusOnXY(followx, followy);
+            }
+}
 
 
 var game = new Phaser.Game(
-    800,
-    700,
+    864,
+    486,
     Phaser.AUTO,
     'game',
     state
@@ -89772,7 +89828,7 @@ function SpaceShip(game, x, y) {
 	//this.body.fixedRotation = true;
 
 	this.body.collideWorldBounds = true;
-	this.engineForce = 100;
+	this.engineForce = 150;
 	this.body.setZeroDamping();
 	this.body.clearShapes();
 	this.body.loadPolygon('physicsShipData', 'playership');
@@ -89802,6 +89858,10 @@ function SpaceShip(game, x, y) {
 //inherit
 SpaceShip.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite class.
 SpaceShip.prototype.constructor = SpaceShip;
+
+
+
+
 
 
 SpaceShip.prototype.calculateGravity = function() 
@@ -89834,6 +89894,7 @@ SpaceShip.prototype.calculateGravity = function()
  * Automatically called by World.update
  */
 SpaceShip.prototype.update = function() {
+
 
 	this.calculateGravity();
 

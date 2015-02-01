@@ -10,7 +10,7 @@ function SpaceShip(game, x, y) {
 	//this.body.fixedRotation = true;
 
 	this.body.collideWorldBounds = true;
-	this.engineForce = 100;
+	this.engineForce = 150;
 	this.body.setZeroDamping();
 	this.body.clearShapes();
 	this.body.loadPolygon('physicsShipData', 'playership');
@@ -40,6 +40,10 @@ function SpaceShip(game, x, y) {
 //inherit
 SpaceShip.prototype = Object.create(Phaser.Sprite.prototype);	//inherit Sprite class.
 SpaceShip.prototype.constructor = SpaceShip;
+
+
+
+
 
 
 SpaceShip.prototype.calculateGravity = function() 
@@ -72,6 +76,7 @@ SpaceShip.prototype.calculateGravity = function()
  * Automatically called by World.update
  */
 SpaceShip.prototype.update = function() {
+
 
 	this.calculateGravity();
 
