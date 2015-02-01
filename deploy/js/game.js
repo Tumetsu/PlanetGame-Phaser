@@ -89639,6 +89639,7 @@ var state = {
         this.load.image("wall", "/assets/wall.png");
         this.load.image("background", "/assets/background-texture.png");
         this.load.spritesheet("player", "/assets/player.png", 48, 48);
+        game.load.physics('physicsShipData', "/assets/shipPolygon.json");
         game.load.image('playership', 'assets/playership.png'); //load player's ship graphic
     },
     create: function(){
@@ -89657,14 +89658,16 @@ var state = {
       this.reset();
     */  
         game.stage.backgroundColor = '#124184';
-        game.physics.startSystem(Phaser.Physics.ARCADE);
+        //game.physics.startSystem(Phaser.Physics.ARCADE);
+        game.world.setBounds(0,0, 2000, 2000);
+        game.physics.startSystem(Phaser.Physics.P2JS);
         game.physics.arcade.gravity.y = GRAVITY;
         
         
-        var planet1 = new Planet(this, 300, 500, 4000000);
+        var planet1 = new Planet(this, 300, 500, 100000);
         this.add.existing(planet1);
-        //var planet2 = new Planet(this, 600, 200, 400000);
-        //this.add.existing(planet2);
+        var planet2 = new Planet(this, 1200, 700, 100000);
+        this.add.existing(planet2);
         
         this.player = new SpaceShip(this, 200, 300);
         this.add.existing(this.player);
@@ -89710,8 +89713,8 @@ var state = {
 
 
 var game = new Phaser.Game(
-    1000,
-    1000,
+    800,
+    700,
     Phaser.AUTO,
     'game',
     state
@@ -89725,15 +89728,22 @@ function Planet(game, x, y, mass)
 {
 	Phaser.Sprite.call(this, game, x, y);
 	this.anchor.setTo(0.5, 0.5);
+	game.physics.p2.enable(this);
+
+	
 
 	this.graphics = game.add.graphics(x, y);
 	this.graphics.lineStyle(0);
     this.graphics.beginFill(0xFFFF0B, 0.5);
-    this.graphics.drawCircle(0, 0,100);
-	
+    
+    this.radius = 400;
+	this.graphics.drawCircle(0, 0, this.radius);
+	this.body.setCircle(this.radius/2);
 	//physics
 	this.mass = mass;
 	this.name = "planet";
+	this.body.debug = true;
+	this.body.static = true;
 
 };
 
@@ -89743,8 +89753,8 @@ Planet.prototype.constructor = Planet;
 
 Planet.prototype.attraction = function(distance, otherMass) {
 	var g = (this.mass * otherMass) / Math.pow(distance, 2);
-	if (g > 800)
-		g = 800;
+	if (g > 400)
+		g = 400;
 	return g;
 };
 
@@ -89754,16 +89764,25 @@ Planet.prototype.attraction = function(distance, otherMass) {
 function SpaceShip(game, x, y) {
 	Phaser.Sprite.call(this, game, x, y, 'playership');
 	this.anchor.setTo(0.5, 0.5);
+	game.camera.follow(this);
 
 	//physics
-	game.physics.enable([this], Phaser.Physics.ARCADE);
+	//game.physics.enable([this], Phaser.Physics.ARCADE);
+	game.physics.p2.enable(this);
+	//this.body.fixedRotation = true;
+
 	this.body.collideWorldBounds = true;
-	this.engineForce = 1.1;
-	this.body.allowGravity = true;
+	this.engineForce = 100;
+	this.body.setZeroDamping();
+	this.body.clearShapes();
+	this.body.loadPolygon('physicsShipData', 'playership');
+	
+	/*this.body.allowGravity = true;
 	this.body.drag.x = 0;
 	this.body.drag.y = 0;
 	this.body.maxVelocity.x = 400;
 	this.body.maxVelocity.y = 400;
+	*/
 	this.body.mass = 1;
 	this.turnSpeed = 3;
 	this.gravitySumVector = new Phaser.Point();
@@ -89775,6 +89794,7 @@ function SpaceShip(game, x, y) {
 	this.rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);	
 
 	this.engineLine = new Phaser.Line(x,y,x,y);
+	this.body.debug = true;
 
 };
 
@@ -89793,15 +89813,20 @@ SpaceShip.prototype.calculateGravity = function()
 			
 			if (obj.name === "planet")
 			{
+
 				var newVec = new Phaser.Point(obj.x - this.body.x, obj.y - this.body.y);
+				var dist = Phaser.Point.distance(this, obj);
+
 				//true force towards the planet
-				newVec = newVec.normalize().multiply(obj.attraction(Phaser.Point.distance(this, obj), this.body.mass), 
-						obj.attraction(Phaser.Point.distance(this, obj), this.body.mass));
+				newVec = newVec.normalize().multiply(obj.attraction(dist, this.body.mass), 
+						obj.attraction(dist, this.body.mass));
 				this.gravitySumVector = Phaser.Point.add(this.gravitySumVector, newVec);
 			}
 		}, this,true);
 
-	this.body.gravity = this.gravitySumVector;		
+	this.body.velocity.x += this.gravitySumVector.x;
+	this.body.velocity.y += this.gravitySumVector.y;
+	this.body.setZeroRotation();
 }
 
 
@@ -89815,6 +89840,7 @@ SpaceShip.prototype.update = function() {
 	//thrust
     if (this.upKey.isDown)
     {
+    	/*
     	var v = new Phaser.Point(20, 0);
     	v = Phaser.Point.normalRightHand(v);
     	console.log(v);
@@ -89823,21 +89849,25 @@ SpaceShip.prototype.update = function() {
     	this.body.velocity = Phaser.Point.add(v.normalize().multiply(this.engineForce,this.engineForce), this.body.velocity);
     	this.engineLine.setTo(this.x, this.y, this.x + v.x, this.y + v.y);
     	console.log(this.body.velocity);
+    	*/
+    	this.body.thrust(this.engineForce);
     }
 
 	if (this.downKey.isDown)
     {
     	//this.body.velocity.y += this.engineForce;
+    	this.body.setZeroForce();
+    	this.body.setZeroVelocity();
     }
 
     if (this.rightKey.isDown)
     {
-    	this.angle += this.turnSpeed;
+    	this.body.angle += this.turnSpeed;
     }
 
     if (this.leftKey.isDown)
     {
-    	this.angle -= this.turnSpeed;
+    	this.body.angle -= this.turnSpeed;
     }
 
    //this.rotation = this.body.angle; 

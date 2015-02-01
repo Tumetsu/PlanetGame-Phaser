@@ -1,0 +1,27 @@
+	{ 
+		
+		"playership": [
+			
+				{
+					"density": 2, "friction": 0, "bounce": 0, 
+					"filter": { "categoryBits": 1, "maskBits": 65535 },
+					"shape": [   49, 32  ,  36.1538467407227, 39.2307691574097  ,  15.8461542129517, 38.1538457870483  ,  3, 32  ,  26, 1  ]
+				}  ,
+				{
+					"density": 2, "friction": 0, "bounce": 0, 
+					"filter": { "categoryBits": 1, "maskBits": 65535 },
+					"shape": [   36.1538467407227, 39.2307691574097  ,  49, 32  ,  49, 49  ]
+				}  ,
+				{
+					"density": 2, "friction": 0, "bounce": 0, 
+					"filter": { "categoryBits": 1, "maskBits": 65535 },
+					"shape": [   3, 32  ,  15.8461542129517, 38.1538457870483  ,  3, 49  ]
+				}  ,
+				{
+					"density": 2, "friction": 0, "bounce": 0, 
+					"filter": { "categoryBits": 1, "maskBits": 65535 },
+					"shape": [   15.8461542129517, 38.1538457870483  ,  36.1538467407227, 39.2307691574097  ,  25.8461532592773, 46.9230768680573  ]
+				}  
+		]
+		
+	}

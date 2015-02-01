@@ -20,6 +20,7 @@ var state = {
         this.load.image("wall", "/assets/wall.png");
         this.load.image("background", "/assets/background-texture.png");
         this.load.spritesheet("player", "/assets/player.png", 48, 48);
+        game.load.physics('physicsShipData', "/assets/shipPolygon.json");
         game.load.image('playership', 'assets/playership.png'); //load player's ship graphic
     },
     create: function(){
@@ -38,14 +39,16 @@ var state = {
       this.reset();
     */  
         game.stage.backgroundColor = '#124184';
-        game.physics.startSystem(Phaser.Physics.ARCADE);
+        //game.physics.startSystem(Phaser.Physics.ARCADE);
+        game.world.setBounds(0,0, 2000, 2000);
+        game.physics.startSystem(Phaser.Physics.P2JS);
         game.physics.arcade.gravity.y = GRAVITY;
         
         
-        var planet1 = new Planet(this, 300, 500, 4000000);
+        var planet1 = new Planet(this, 300, 500, 100000);
         this.add.existing(planet1);
-        //var planet2 = new Planet(this, 600, 200, 400000);
-        //this.add.existing(planet2);
+        var planet2 = new Planet(this, 1200, 700, 100000);
+        this.add.existing(planet2);
         
         this.player = new SpaceShip(this, 200, 300);
         this.add.existing(this.player);
@@ -91,8 +94,8 @@ var state = {
 
 
 var game = new Phaser.Game(
-    1000,
-    1000,
+    800,
+    700,
     Phaser.AUTO,
     'game',
     state
