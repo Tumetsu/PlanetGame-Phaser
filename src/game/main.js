@@ -11,20 +11,20 @@
 var SPEED = 200;
 var GRAVITY = 0;
 
-        var worldwidth = 2000;
-        var mapSizeMaxCurrent = 800;
-        var mapSizeMax = 2000;
-        var mapSizeX = 800;
-        var mapSizeY = 700;
-        var worldScale = 1;
-        var stageGroup = null;
-        var oldcamera = null;
-        var currentcamerapositionX = 0;
-        var currentcamerapositionY = 0;
-        var followx = 0;
-        var followy = 0;
-        var rescalefactorx = 1;
-        var rescalefactory = 1;
+            
+var zoomMinWidth = 864;
+var mapSizeXCurrent = 2000;
+var mapSizeX = 2000;
+var mapSizeY = 1125;
+var worldScale = 1;
+var stageGroup = null;
+var oldcamera = null;
+var currentcamerapositionX = 0;
+var currentcamerapositionY = 0;
+var followx = 0;
+var followy = 0;
+var rescalefactorx = 1;
+var rescalefactory = 1;
 
 
 var state = {
@@ -40,38 +40,32 @@ var state = {
         game.load.image('playership', 'assets/playership.png'); //load player's ship graphic
     },
     create: function(){
-    /*
-      // State create logic goes here
-      this.physics.startSystem(Phaser.Physics.ARCADE);
-      this.physics.arcade.gravity.y = GRAVITY;
 
-      
-      this.background.autoScroll(-SPEED,0);
-
-      this.player = this.add.sprite(0,0,'player');
-      this.player.animations.add('fly', [0,1,2], 10, true);
-      this.physics.arcade.enableBody(this.player);
-      this.player.body.collideWorldBounds = true;
-      this.reset();
-    */  
-
-        game.stage.backgroundColor = '#124184';
-        //game.physics.startSystem(Phaser.Physics.ARCADE);
         game.world.setBounds(0,0, 2000, 2000);
-        game.physics.startSystem(Phaser.Physics.P2JS);
-        game.physics.arcade.gravity.y = GRAVITY;
-        //stageGroup = new Phaser.Group(game);
-        this.background = this.add.tileSprite(0,0, this.world.width, this.world.height, 'background');
-        
-        var planet1 = new Planet(this, 300, 500, 100000);
-        this.add.existing(planet1);
-        var planet2 = new Planet(this, 1200, 700, 100000);
-        this.add.existing(planet2);
-        
-        this.player = new SpaceShip(this, 200, 300);
-        this.add.existing(this.player);
-        
+        game.physics.startSystem(Phaser.Physics.P2JS);  
+        this.background = this.add.tileSprite(-500,-500, this.world.width+1000, this.world.height+1000, 'background');
 
+        //group to add all zoomable gameobjects
+        stageGroup = this.add.group();
+        stageGroup.x = 0;
+        stageGroup.y = 0;
+        stageGroup.visible = true;
+        
+        //draw rectangle around level limits
+        this.stageLimits = new Phaser.Graphics(this, 0,0);
+        stageGroup.add(this.stageLimits);
+        this.stageLimits.lineStyle(8, 0xffffff, 0.2);
+        this.stageLimits.drawRect(0,0, this.world.width, this.world.height);
+        
+        //add few gameobjects
+        var planet1 = new Planet(this, stageGroup, 300, 500, 100000);
+        stageGroup.add(planet1);
+        var planet2 = new Planet(this, stageGroup, 2000, 0, 100000);
+        stageGroup.add(planet2);
+        this.player = new SpaceShip(this, 200, 300);
+        stageGroup.add(this.player);
+        
+        game.camera.bounds = null;
         
 
     },
@@ -82,71 +76,46 @@ var state = {
     },
     */
     update: function() {
-        // State Update Logic goes here.
-        /*
-        if(this.gameStarted){
-        }else{
-            this.player.y = this.world.centerY + (8 * Math.cos(this.time.now/200));
-        }
-        */
-        //zoom();
+        
+        zoom(); //Temporary
 
     },
     reset:function(){
-        /*
-        this.gameStarted = false;
-        this.gameOver = false;
-        this.score = 0;
-
-        this.player.body.allowGravity = false;
-        this.player.reset(this.world.width / 4, this.world.centerY);
-        this.player.animations.play('fly');
-        */
+       
     }
 
    
 };
 
 var zoom = function() {
-  
+    //Modified from code here: http://www.html5gamedevs.com/topic/7150-how-to-zoom-out-from-center-of-gameworld/
+
     // zoom in/out with a/o
-        if ((mapSizeMaxCurrent < mapSizeMax)) 
-        { 
-            console.log("kasva");
-            mapSizeMaxCurrent += 32; 
-        }
-            else if (game.input.keyboard.isDown(Phaser.Keyboard.O) && (mapSizeMaxCurrent > worldwidth )) { mapSizeMaxCurrent -= 32; }
-            console.log("2");
-            mapSizeMaxCurrent = Phaser.Math.clamp(mapSizeMaxCurrent, worldwidth , mapSizeMax); 
-            worldScale = mapSizeMaxCurrent/mapSizeMax;
+    if (game.input.keyboard.isDown(Phaser.Keyboard.A) && (mapSizeXCurrent < mapSizeX)) { 
+        mapSizeXCurrent += 32; 
+    }
+    else if (game.input.keyboard.isDown(Phaser.Keyboard.O) && (mapSizeXCurrent > zoomMinWidth )) {
+        mapSizeXCurrent -= 32; 
+    }
 
-            console.log(stageGroup);
-            stageGroup.scale.set(worldScale);  // scales my stageGroup (contains all objects that shouldbe scaled)
+    mapSizeXCurrent = Phaser.Math.clamp(mapSizeXCurrent, zoomMinWidth , mapSizeX); 
+    worldScale = mapSizeXCurrent/mapSizeX;
+    stageGroup.scale.set(worldScale);  // scales my stageGroup (contains all objects that should be scaled)
 
-            if(game.input.activePointer.isDown && !game.input.pointer2.isDown){   //move around the world
-                if (oldcamera) { 
-                    game.camera.x += oldcamera.x - game.input.activePointer.position.x; 
-                    game.camera.y += oldcamera.y - game.input.activePointer.position.y; 
-                }
-                oldcamera = game.input.activePointer.position.clone();
-                // store current camera position (relative to the actual scale size of the world)
-                rescalefactorx = mapSizeX / (mapSizeX * worldScale); // multiply by rescalefactor to get original world value
-                rescalefactory = mapSizeY / (mapSizeY * worldScale);
-                currentcamerapositionX = game.camera.view.centerX*rescalefactorx;
-                currentcamerapositionY = game.camera.view.centerY*rescalefactory;
-            }
-            else { //center camera on the point that was in the center of the view atm the zooming started
-                oldcamera = null;
-                if (!currentcamerapositionX){ // if not set yet (never zoomed)
-                    currentcamerapositionX = game.camera.view.centerX;
-                    currentcamerapositionY = game.camera.view.centerY;
-                }
-                followx = currentcamerapositionX*worldScale;
-                followy = currentcamerapositionY*worldScale;
+    
+    //center camera on the point that was in the center of the view atm the zooming started
+    oldcamera = null;
+    if (!currentcamerapositionX){ // if not set yet (never zoomed)
+        currentcamerapositionX = game.camera.view.centerX;
+        currentcamerapositionY = game.camera.view.centerY;
+    }
+    followx = currentcamerapositionX*worldScale;
+    followy = currentcamerapositionY*worldScale;
 
-                game.camera.focusOnXY(followx, followy);
-            }
+    game.camera.focusOnXY(followx, followy);
+            
 }
+
 
 
 var game = new Phaser.Game(
