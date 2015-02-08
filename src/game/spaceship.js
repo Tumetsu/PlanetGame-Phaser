@@ -7,13 +7,11 @@ function SpaceShip(game, x, y) {
 
 	//physics
 	game.physics.p2.enable(this);
-
 	this.body.collideWorldBounds = true;
 	this.engineForce = 150;
 	this.body.setZeroDamping();
 	this.body.clearShapes();
 	this.body.loadPolygon('physicsShipData', 'playership');
-
 	this.body.mass = 1;
 	this.turnSpeed = 3;
 	this.gravitySumVector = new Phaser.Point();
@@ -23,9 +21,17 @@ function SpaceShip(game, x, y) {
 	this.downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
 	this.leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
 	this.rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);	
+	this.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.N);	
 
-	this.engineLine = new Phaser.Line(x,y,x,y);
-	//this.body.debug = true;
+	this.spaceKey.onDown.add(function()
+	{
+		this.autopilotOn = !this.autopilotOn;
+		console.log(this.autopilotOn)
+	}, this);
+
+	this.autopilot = new Autopilot();
+	this.autopilotOn = false;
+
 
 };
 
@@ -40,6 +46,7 @@ SpaceShip.prototype.calculateGravity = function()
 	this.gravitySumVector.x = 0;
 	this.gravitySumVector.y = 0;
 
+	
 	this.parent.forEach(function(obj) {
 			
 			if (obj.name === "planet")
@@ -58,6 +65,7 @@ SpaceShip.prototype.calculateGravity = function()
 	this.body.velocity.x += this.gravitySumVector.x;
 	this.body.velocity.y += this.gravitySumVector.y;
 	this.body.setZeroRotation();
+	
 }
 
 
@@ -66,7 +74,18 @@ SpaceShip.prototype.calculateGravity = function()
  */
 SpaceShip.prototype.update = function() {
 	
+	
 	this.calculateGravity();
+
+	if (this.autopilotOn)
+	{
+		var v = this.autopilot.adjustVelocityForOrbit(this.gravitySumVector, this.body.velocity);
+
+		this.body.velocity.x = v.x;
+		this.body.velocity.y = v.y;
+	}
+
+	
 
 	//thrust
     if (this.upKey.isDown)
@@ -81,7 +100,7 @@ SpaceShip.prototype.update = function() {
     	this.body.setZeroVelocity();
     }
 
-    if (this.rightKey.isDown)
+   	if (this.rightKey.isDown)
     {
     	this.body.angle += this.turnSpeed;
     }
@@ -90,7 +109,6 @@ SpaceShip.prototype.update = function() {
     {
     	this.body.angle -= this.turnSpeed;
     }
-
    //this.rotation = this.body.angle; 
 };
 

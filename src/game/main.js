@@ -58,10 +58,10 @@ var state = {
         this.stageLimits.drawRect(0,0, this.world.width, this.world.height);
         
         //add few gameobjects
-        var planet1 = new Planet(this, stageGroup, 300, 500, 100000);
+        var planet1 = new Planet(this, stageGroup, 1000, 1000, 100000);
         stageGroup.add(planet1);
-        var planet2 = new Planet(this, stageGroup, 2000, 0, 100000);
-        stageGroup.add(planet2);
+        //var planet2 = new Planet(this, stageGroup, 2000, 0, 100000);
+        //stageGroup.add(planet2);
         this.player = new SpaceShip(this, 200, 300);
         stageGroup.add(this.player);
         
